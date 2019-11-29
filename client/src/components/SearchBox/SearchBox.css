@@ -1,0 +1,31 @@
+input {
+  height: 42px;
+  padding: 0 12px;
+  font-size: 20px;
+  border: solid 1px #999;
+}
+
+button {
+  height: 42px;
+  font-size:20px;
+  border: solid 1px #999;
+}
+
+.search-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.search-box > label {
+  flex: 3;
+  width: 100%;
+}
+.search-box > label > input {
+  width: 100%;
+  border-radius: 4px 0 0 4px;
+}
+.search-box > button {
+  width: 5em;
+  border-radius:  0 4px 4px 0;
+}

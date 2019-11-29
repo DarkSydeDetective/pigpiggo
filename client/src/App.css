@@ -1,0 +1,48 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  color: white;
+  max-width:1000px;
+  margin:0 auto;
+}
+
+.App-logo {
+  height: 40vmin;
+}
+
+header {
+  margin: 40px 0;
+}
+
+.App-header h1 {
+  font-size:40px;
+  color: white;
+}
+
+.App-link {
+  text-decoration: none;
+}
+
+.beta-tag {
+  color: #bbb;
+  font-size:18px;
+}
+
+.about-link {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+}
+
+.main-content {
+  width: 90%;
+  margin-bottom: 20px;
+}
+
+.link-active {
+  display: none;
+}
