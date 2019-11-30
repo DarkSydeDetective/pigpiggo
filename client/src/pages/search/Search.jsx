@@ -32,7 +32,7 @@ const Search = props => {
     props.history.push(`/?search=${newSearch}`);
     if (newSearch === "") return;
     setLoading(true);
-    axios.get(config.api.url, { params: { newSearch } }).then(res => {
+    axios.get(config.api.url, { params: { search: newSearch } }).then(res => {
       const videos = res.data;
       setLoading(false);
       setHasSearched(true);
