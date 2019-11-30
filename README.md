@@ -57,7 +57,10 @@ Note: You'll need to add whatever user you're logged in as as a user in postgres
   This will download all the video metadata and captions into the current directory, then when you next run update.sh it'll put all of the videos accumulated there into the database, then move them to the 'done' folder so they don't get processed again next time.
 * After new videos appear on YT it seems to take a little bit of time for captions to be auto-generated. If you do a download during this window the video may get marked as downloaded but there won't be any captions and so it won't be searchable
   so you probably want to wait an extra hour or so to make sure captions are available before download.
-* The pigpiggo database so far has about 30,000 videos in the database, currently working on the rest but it will take a little time. I'll make what I have so far available so you don't need to redownload that 30,000.
+* The pigpiggo database so far has about 30,000 videos in the database, currently working on the rest but it will take a little time. Here's what I have so far available so you don't need to redownload that 30,000.  
+Video caption/metadata (unzip to /scripts): [done.zip](https://drive.google.com/file/d/1qaZRjZEU5wUnXNVqufPajASkhCm8gwoi/view?usp=sharing )   
+Archive.txt (copy to /scripts): [archive.txt](https://drive.google.com/open?id=1hRHAuY8G3couZiMF8Ds348vuk31_YaB2)  
+Finally, run ./update.sh to process and update the db. (you can just Ctrl+C a couple of times to skip the downloading phase and go straight to processing the data).
 * If you get temp banned for too many requests it usually fixes itself in a day or so. You can try a VPN or changing IP addresses to get around it.
 
 ## Contributing
