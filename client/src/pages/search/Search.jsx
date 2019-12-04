@@ -6,20 +6,31 @@ import moment from "moment";
 import config from "../../config";
 import qs from "query-string";
 import { withRouter } from "react-router-dom";
+import ReactPaginate from "react-paginate";
 
 const Search = props => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
+  const [start, setStart] = useState(0);
+  const [resultCount, setResultCount] = useState(0);
 
   useEffect(() => {
     const searchParam = qs.parse(props.location.search, {
       ignoreQueryPrefix: true
     }).search;
+    const startParam = qs.parse(props.location.start, {
+      ignoreQueryPrefix: true
+    }).start;
     if (searchParam) {
       setSearch(searchParam);
-      performSearch(searchParam);
+    }
+    if (startParam) {
+      setStart(parseInt(startParam));
+    }
+    if (searchParam || startParam) {
+      performSearch(searchParam, startParam);
     }
   }, []);
 
@@ -28,16 +39,28 @@ const Search = props => {
     performSearch();
   };
 
-  const performSearch = (newSearch = search) => {
-    props.history.push(`/?search=${newSearch}`);
+  const performSearch = (newSearch = search, newStart = start) => {
+    props.history.push(`/?search=${newSearch}&start=${newStart}`);
     if (newSearch === "") return;
     setLoading(true);
-    axios.get(config.api.url, { params: { search: newSearch } }).then(res => {
-      const videos = res.data;
-      setLoading(false);
-      setHasSearched(true);
-      setResults(videos);
-    });
+    axios
+      .get(config.api.url, { params: { search: newSearch, start: newStart } })
+      .then(res => {
+        const videos = res.data;
+        setResultCount(
+          res.data && res.data.length > 0 ? res.data[0].full_count : 0
+        );
+        setLoading(false);
+        setHasSearched(true);
+        setResults(videos);
+      });
+  };
+
+  const handlePageClick = data => {
+    let selected = data.selected;
+    let newStart = Math.ceil(selected * 50);
+    setStart(newStart);
+    performSearch(search, newStart);
   };
 
   const handleSearchChange = e => {
@@ -104,14 +127,12 @@ const Search = props => {
         </li>
       );
     });
-    const maxResults =
-      results.length === 200 ? (
-        <p className="results-over">
-          Over 200 results found. Displaying the first 200
-        </p>
-      ) : (
-        <p className="results-over">{results.length} results</p>
-      );
+    const maxResults = (
+      <p className="results-over">
+        Found {resultCount} results. Displaying {start + 1} -{" "}
+        {start + 50 > resultCount ? resultCount : start + 50}
+      </p>
+    );
 
     resultsJsx = (
       <div className="search-results">
@@ -139,6 +160,24 @@ const Search = props => {
         </form>
       </section>
       <section className="results">{resultsJsx}</section>
+      {resultCount && resultCount > 50 && !loading ? (
+        <section>
+          <ReactPaginate
+            previousLabel={"Previous"}
+            nextLabel={"Next"}
+            breakLabel={"..."}
+            forcePage={Math.ceil(start / 50)}
+            breakClassName={"break-me"}
+            pageCount={Math.ceil(resultCount / 50)}
+            marginPagesDisplayed={2}
+            pageRangeDisplayed={5}
+            onPageChange={handlePageClick}
+            containerClassName={"pagination"}
+            subContainerClassName={"pages pagination"}
+            activeClassName={"active"}
+          />
+        </section>
+      ) : null}
     </React.Fragment>
   );
 };

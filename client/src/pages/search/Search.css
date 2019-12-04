@@ -60,3 +60,28 @@
   .results-over {
     margin-bottom: 20px;
   }
+
+  .pagination ul {
+    display: inline-block;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.pagination li {
+    display: inline-block;
+    cursor:pointer;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.pagination li.disabled {
+  cursor: default;
+}
+.pagination li.disabled a {
+  color: #777;
+}
+
+.pagination li.active a {
+  color: rgb(219, 232, 255);
+  font-weight:bold;
+}
