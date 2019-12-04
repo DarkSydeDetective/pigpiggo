@@ -66,13 +66,16 @@
     padding-left: 15px;
     padding-right: 15px;
 }
-
 .pagination li {
-    display: inline-block;
+  display: inline-block;
+}
+
+.pagination li a {
     cursor:pointer;
     padding-left: 15px;
     padding-right: 15px;
 }
+
 
 .pagination li.disabled {
   cursor: default;
