@@ -12,6 +12,7 @@ const Search = props => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [results, setResults] = useState([]);
   const [start, setStart] = useState(0);
   const [resultCount, setResultCount] = useState(0);
@@ -25,6 +26,7 @@ const Search = props => {
     }).start;
     if (searchParam) {
       setSearch(searchParam);
+      setSearchInput(searchParam);
     }
     if (startParam) {
       setStart(parseInt(startParam));
@@ -36,7 +38,9 @@ const Search = props => {
 
   const handleSubmit = e => {
     e.preventDefault();
-    performSearch();
+    setStart(0);
+    setSearch(searchInput);
+    performSearch(searchInput, 0);
   };
 
   const performSearch = (newSearch = search, newStart = start) => {
@@ -63,8 +67,8 @@ const Search = props => {
     performSearch(search, newStart);
   };
 
-  const handleSearchChange = e => {
-    setSearch(e.target.value);
+  const handleSearchInputChange = e => {
+    setSearchInput(e.target.value);
   };
 
   let resultsJsx;
@@ -129,7 +133,7 @@ const Search = props => {
     });
     const maxResults = (
       <p className="results-over">
-        Found {resultCount} results. Displaying {start + 1} -{" "}
+        Found {resultCount} results for '{search}'. Displaying {start + 1} -{" "}
         {start + 50 > resultCount ? resultCount : start + 50}
       </p>
     );
@@ -155,7 +159,7 @@ const Search = props => {
       <section className="search-form">
         <form onSubmit={handleSubmit}>
           <div className="search-wrap">
-            <SearchBox search={search} handleChange={handleSearchChange} />
+            <SearchBox search={searchInput} handleChange={handleSearchInputChange} />
           </div>
         </form>
       </section>
