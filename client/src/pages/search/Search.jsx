@@ -18,21 +18,18 @@ const Search = props => {
   const [resultCount, setResultCount] = useState(0);
 
   useEffect(() => {
-    const searchParam = qs.parse(props.location.search, {
-      ignoreQueryPrefix: true
-    }).search;
-    const startParam = qs.parse(props.location.start, {
-      ignoreQueryPrefix: true
-    }).start;
-    if (searchParam) {
-      setSearch(searchParam);
-      setSearchInput(searchParam);
+    const params = qs.parse(props.location.search, {
+      ignoreQueryPrefix: false
+    });
+    if (params.search) {
+      setSearch(params.search);
+      setSearchInput(params.search);
     }
-    if (startParam) {
-      setStart(parseInt(startParam));
+    if (params.start) {
+      setStart(parseInt(params.start));
     }
-    if (searchParam || startParam) {
-      performSearch(searchParam, startParam);
+    if (params.search || params.start) {
+      performSearch(params.search, params.start ? parseInt(params.start) : 0);
     }
   }, []);
 
