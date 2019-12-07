@@ -15,5 +15,6 @@ const config =
 
 export default {
   // Add common config values here
+  resultsPerPage: 50,
   ...config
 };

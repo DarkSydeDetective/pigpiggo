@@ -17,6 +17,7 @@ const Search = props => {
   const [start, setStart] = useState(0);
   const [resultCount, setResultCount] = useState(0);
 
+  // set initial state on startup
   useEffect(() => {
     const params = qs.parse(props.location.search, {
       ignoreQueryPrefix: false
@@ -28,19 +29,19 @@ const Search = props => {
     if (params.start) {
       setStart(parseInt(params.start));
     }
-    if (params.search || params.start) {
-      performSearch(params.search, params.start ? parseInt(params.start) : 0);
-    }
   }, []);
+
+  useEffect(() => {
+    performSearch();
+  }, [start, search]);
 
   const handleSubmit = e => {
     e.preventDefault();
     setStart(0);
     setSearch(searchInput);
-    performSearch(searchInput, 0);
   };
 
-  const performSearch = (newSearch = search, newStart = start) => {
+  const performSearch = () => {
     props.history.push(`/?search=${newSearch}&start=${newStart}`);
     if (newSearch === "") return;
     setLoading(true);
@@ -59,9 +60,8 @@ const Search = props => {
 
   const handlePageClick = data => {
     let selected = data.selected;
-    let newStart = Math.ceil(selected * 50);
+    let newStart = Math.ceil(selected * config.resultsPerPage);
     setStart(newStart);
-    performSearch(search, newStart);
   };
 
   const handleSearchInputChange = e => {
@@ -131,7 +131,7 @@ const Search = props => {
     const maxResults = (
       <p className="results-over">
         Found {resultCount} results for '{search}'. Displaying {start + 1} -{" "}
-        {start + 50 > resultCount ? resultCount : start + 50}
+        {start + config.resultsPerPage > resultCount ? resultCount : start + config.resultsPerPage}
       </p>
     );
 
@@ -161,15 +161,15 @@ const Search = props => {
         </form>
       </section>
       <section className="results">{resultsJsx}</section>
-      {resultCount && resultCount > 50 && !loading ? (
+      {resultCount && resultCount > config.resultsPerPage && !loading ? (
         <section>
           <ReactPaginate
             previousLabel={"Previous"}
             nextLabel={"Next"}
             breakLabel={"..."}
-            forcePage={Math.ceil(start / 50)}
+            forcePage={Math.ceil(start / config.resultsPerPage)}
             breakClassName={"break-me"}
-            pageCount={Math.ceil(resultCount / 50)}
+            pageCount={Math.ceil(resultCount / config.resultsPerPage)}
             marginPagesDisplayed={2}
             pageRangeDisplayed={5}
             onPageChange={handlePageClick}
