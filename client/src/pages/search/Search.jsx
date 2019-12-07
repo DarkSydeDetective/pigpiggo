@@ -11,10 +11,11 @@ import ReactPaginate from "react-paginate";
 const Search = props => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [results, setResults] = useState([]);
+  const [searchParams, setSearchParams] = useState({ start: 0, keyword: '', title: '' });
+  const [keyword, setKeyword] = useState("");
   const [start, setStart] = useState(0);
+  const [title, setTitle] = useState("");
+  const [results, setResults] = useState([]);
   const [resultCount, setResultCount] = useState(0);
 
   // set initial state on startup
@@ -22,31 +23,41 @@ const Search = props => {
     const params = qs.parse(props.location.search, {
       ignoreQueryPrefix: false
     });
-    if (params.search) {
-      setSearch(params.search);
-      setSearchInput(params.search);
+    const initialSearchParams = { start: 0, keyword: '', title: '' };
+    if (params.keyword) {
+      initialSearchParams.keyword = params.keyword;
+      setKeyword(params.keyword);
+    }
+    if (params.title) {
+      initialSearchParams.title = params.title;
+      setTitle(params.title);
     }
     if (params.start) {
-      setStart(parseInt(params.start));
+      const startNum = parseInt(params.start);
+      initialSearchParams.start = startNum;
+      setStart(startNum);
     }
+    setSearchParams(initialSearchParams);
   }, []);
 
   useEffect(() => {
     performSearch();
-  }, [start, search]);
+  }, [searchParams]);
 
   const handleSubmit = e => {
     e.preventDefault();
+    if (!keyword) return;
     setStart(0);
-    setSearch(searchInput);
+    setSearchParams({ keyword, title, start: 0 });
   };
 
   const performSearch = () => {
-    props.history.push(`/?search=${search}&start=${start}`);
-    if (search === "") return;
+    const { keyword, title, start } = searchParams;
+    props.history.push(`/?keyword=${keyword}&title=${title}&start=${start}`);
+    if (!keyword) return;
     setLoading(true);
     axios
-      .get(config.api.url, { params: { search: search, start: start } })
+      .get(config.api.url, { params: { keyword, title, start } })
       .then(res => {
         const videos = res.data;
         setResultCount(
@@ -62,10 +73,15 @@ const Search = props => {
     let selected = data.selected;
     let newStart = Math.ceil(selected * config.resultsPerPage);
     setStart(newStart);
+    setSearchParams({ keyword, title, start: newStart });
   };
 
-  const handleSearchInputChange = e => {
-    setSearchInput(e.target.value);
+  const handleKeywordInputChange = e => {
+    setKeyword(e.target.value);
+  };
+
+  const handleTitleInputChange = e => {
+    setTitle(e.target.value);
   };
 
   let resultsJsx;
@@ -130,8 +146,8 @@ const Search = props => {
     });
     const maxResults = (
       <p className="results-over">
-        Found {resultCount} results for '{search}'. Displaying {start + 1} -{" "}
-        {start + config.resultsPerPage > resultCount ? resultCount : start + config.resultsPerPage}
+        Found {resultCount} results for '{searchParams.keyword}'. Displaying {searchParams.start + 1} -{" "}
+        {searchParams.start + config.resultsPerPage > resultCount ? resultCount : searchParams.start + config.resultsPerPage}
       </p>
     );
 
@@ -156,7 +172,7 @@ const Search = props => {
       <section className="search-form">
         <form onSubmit={handleSubmit}>
           <div className="search-wrap">
-            <SearchBox search={searchInput} handleChange={handleSearchInputChange} />
+            <SearchBox keyword={keyword} title={title} handleKeywordChange={handleKeywordInputChange} handleTitleChange={handleTitleInputChange} />
           </div>
         </form>
       </section>

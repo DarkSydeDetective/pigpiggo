@@ -12,19 +12,46 @@ button {
 }
 
 .search-box {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  & > label {
+  .main-search-wrap {
+    display:flex;
+    flex-direction: column;
+    text-align: left;
+  }
+  .keyword-control-wrap {
+    display: flex;
+    flex-direction: row;
+    justify-content: baseline;
+    & > button {
+      width: 5em;
+      border-radius:  0 4px 4px 0;
+    }
+  }
+  .main-search {
+    margin-top:2px;
+  }
+  .input-wrap {
+    margin-top:2px;
+  }
+  label {
     flex: 3;
     width: 100%;
-    &  > input {
+    input {
       width: 100%;
       border-radius: 4px 0 0 4px;
     }
-  } 
-  & > button {
-    width: 5em;
-    border-radius:  0 4px 4px 0;
+    margin-bottom:20px;
   }
+}
+.advanced-search {
+  text-align: left;
+  margin-top:10px;
+}
+.advanced-search-button {
+  background:none;
+  color:white;
+  border:none;
+  outline:none;
+  box-shadow: none;
+  cursor: pointer;
+  font-size:16px;
 }

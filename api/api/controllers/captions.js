@@ -1,23 +1,31 @@
 const db = require("../db");
 
 const getCaptions = function(req, res) {
-  console.log(req.query);
-  const search = req.query.search;
+  const keyword = req.query.keyword;
+  const title = req.query.title;
   const start = req.query.start ? parseInt(req.query.start) : 0;
   if (isNaN(start)) {
     start = 0;
   }
-  const searchField =
-    search && search.length > 0 ? `WHERE caption.text ILIKE $1` : "";
-  const params = searchField === "" ? [] : ["%" + search + "%"];
+  const params = [];
+  let paramCount = 0, keywordField = '', titleField = '';
+  if (keyword && keyword.length > 0) {
+    keywordField = `WHERE caption.text ILIKE $${++paramCount}`;
+    params.push("%" + keyword + "%");
+  }
+  if (title && title.length > 0) {
+    titleField = `${paramCount === 1 ? 'AND' : 'WHERE'} video.title ILIKE $${++paramCount}`;
+    params.push("%" + title + "%");
+  }
 
   db.pool.query(
     `SELECT caption.id, caption.video_id, caption.text as text, caption.time as time, video.title as title, video.length as length, video.thumbnail as thumbnail, video.uploaded as uploaded, count(*) OVER() AS full_count
                     FROM caption
                     JOIN video ON caption.video_id = video.id
-                    ${searchField}
+                    ${keywordField}
+                    ${titleField}
                 ORDER BY video.uploaded DESC
-	    	    LIMIT 50 OFFSET ${start}
+	    	        LIMIT 50 OFFSET ${start}
     ;`,
     params,
     (err, data) => {
