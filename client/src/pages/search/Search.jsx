@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import "./Search.css";
+import "./Search.scss";
 import SearchBox from "../../components/SearchBox/SearchBox";
 import moment from "moment";
 import config from "../../config";

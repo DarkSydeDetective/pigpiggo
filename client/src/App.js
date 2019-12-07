@@ -7,7 +7,7 @@ import {
   Link
 } from "react-router-dom";
 
-import "./App.css";
+import "./App.scss";
 import Search from "./pages/search/Search";
 import About from "./pages/about/About";
 
