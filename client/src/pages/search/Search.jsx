@@ -42,11 +42,11 @@ const Search = props => {
   };
 
   const performSearch = () => {
-    props.history.push(`/?search=${newSearch}&start=${newStart}`);
-    if (newSearch === "") return;
+    props.history.push(`/?search=${search}&start=${start}`);
+    if (search === "") return;
     setLoading(true);
     axios
-      .get(config.api.url, { params: { search: newSearch, start: newStart } })
+      .get(config.api.url, { params: { search: search, start: start } })
       .then(res => {
         const videos = res.data;
         setResultCount(
