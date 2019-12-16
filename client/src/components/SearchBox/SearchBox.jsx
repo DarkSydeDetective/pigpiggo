@@ -8,6 +8,15 @@ const SearchBox = ({ keyword, title, startDate, endDate, handleKeywordChange, ha
   // const [showAdvanced, setShowAdvanced] = useState(title ? true : false);
   const showAdvanced = true;
   const showDate = true;
+
+  if (showDate) {
+	  if (startDate) {
+		startDate = new Date(startDate);
+	  }
+	  if (endDate) {
+		  endDate = new Date(endDate);
+	  }
+  }
   return (
     <div className="search-box">
       <div className="main-search-wrap">

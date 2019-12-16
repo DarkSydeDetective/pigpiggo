@@ -27,7 +27,7 @@ const Search = props => {
     });
     const initialSearchParams = { start: 0, keyword: '', startDate: '', endDate: '', title: '' };
 	var regDate = /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/;
-	console.log(params);
+
     if (params.keyword) {
       initialSearchParams.keyword = params.keyword;
       setKeyword(params.keyword);
@@ -37,18 +37,12 @@ const Search = props => {
       setTitle(params.title);
     }
 	if (params.startDate) {
-		var sD = new Date(params.startDate);
-		//initialSearchParams.startDate = params.startDate;
-		//setStartDate(params.startDate);
-		initialSearchParams.startDate = sD.getFullYear()+'-'+((sD.getMonth() + 1) < 10 ? '0'+(sD.getMonth() + 1) : sD.getMonth() + 1)+'-'+(sD.getDate() < 10 ? '0'+sD.getDate() : sD.getDate());
-		setStartDate(sD.getFullYear()+'-'+((sD.getMonth() + 1) < 10 ? '0'+(sD.getMonth() + 1) : sD.getMonth() + 1)+'-'+(sD.getDate() < 10 ? '0'+sD.getDate() : sD.getDate()));
+		initialSearchParams.startDate = params.startDate;
+		setStartDate(params.startDate);
 	}
 	if (params.endDate) {
-		//initialSearchParams.endDate = params.endDate;
-		//setEndDate(params.endDate);
-		var eD = new Date(params.endDate);
-		initialSearchParams.endDate = eD.getFullYear()+'-'+((eD.getMonth() + 1) < 10 ? '0'+(eD.getMonth() + 1) : eD.getMonth() + 1)+'-'+(eD.getDate() < 10 ? '0'+eD.getDate() : eD.getDate());
-		setEndDate(eD.getFullYear()+'-'+((eD.getMonth() + 1) < 10 ? '0'+(eD.getMonth() + 1) : eD.getMonth() + 1)+'-'+(eD.getDate() < 10 ? '0'+eD.getDate() : eD.getDate()));
+		initialSearchParams.endDate = params.endDate;
+		setEndDate(params.endDate);
 	}
 
     if (params.start) {
@@ -71,6 +65,7 @@ const Search = props => {
   };
 
   const performSearch = () => {
+	  //console.log(searchParams);
     const { keyword, title, startDate, endDate, start } = searchParams;
     props.history.push(`/?keyword=${keyword}&title=${title}&startDate=${startDate}&endDate=${endDate}&start=${start}`);
     if (!keyword) return;
