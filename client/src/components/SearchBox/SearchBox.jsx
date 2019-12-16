@@ -1,10 +1,13 @@
 import React from "react";
 import "./SearchBox.scss";
+import DatePicker from "react-date-picker"
+import "react-date-picker/dist/DatePicker.css"
 
-const SearchBox = ({ keyword, title, handleKeywordChange, handleTitleChange }) => {
+const SearchBox = ({ keyword, title, startDate, endDate, handleKeywordChange, handleTitleChange, handleStartDateChange, handleEndDateChange }) => {
   // Add show/hide advanced options functionality when we have more advanced search options
   // const [showAdvanced, setShowAdvanced] = useState(title ? true : false);
   const showAdvanced = true;
+  const showDate = true;
   return (
     <div className="search-box">
       <div className="main-search-wrap">
@@ -40,7 +43,33 @@ const SearchBox = ({ keyword, title, handleKeywordChange, handleTitleChange }) =
           </label>
         </div>
        : null }
-      </div>
+      </div>	 
+	{showDate ?
+	<div className="date-search-box">
+		<div className="title-wrap">
+		  <label htmlFor="startDate">
+			<span>Start Date (optional)</span><br/>
+			<DatePicker
+				id="startDate"
+				value={startDate}
+				onChange={handleStartDateChange}
+				dateFormat="yyyy-MM-dd"
+			/>
+		  </label>
+		</div>
+		<div className="title-wrap">
+		  <label htmlFor="endDate">
+			<span>End Date (optional)</span><br/>
+			<DatePicker
+				id="endDate"
+				value={endDate}
+				onChange={handleEndDateChange}
+				dateFormat="yyyy-MM-dd"
+			/>
+		  </label>
+		</div>
+	</div>
+	: null }
     </div>
   );
 };

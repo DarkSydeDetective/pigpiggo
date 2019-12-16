@@ -11,9 +11,11 @@ import ReactPaginate from "react-paginate";
 const Search = props => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [searchParams, setSearchParams] = useState({ start: 0, keyword: '', title: '' });
+  const [searchParams, setSearchParams] = useState({ start: 0, keyword: '', title: '', startDate: '', endDate: '' });
   const [keyword, setKeyword] = useState("");
   const [start, setStart] = useState(0);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [title, setTitle] = useState("");
   const [results, setResults] = useState([]);
   const [resultCount, setResultCount] = useState(0);
@@ -23,7 +25,9 @@ const Search = props => {
     const params = qs.parse(props.location.search, {
       ignoreQueryPrefix: false
     });
-    const initialSearchParams = { start: 0, keyword: '', title: '' };
+    const initialSearchParams = { start: 0, keyword: '', startDate: '', endDate: '', title: '' };
+	var regDate = /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/;
+	console.log(params);
     if (params.keyword) {
       initialSearchParams.keyword = params.keyword;
       setKeyword(params.keyword);
@@ -32,6 +36,21 @@ const Search = props => {
       initialSearchParams.title = params.title;
       setTitle(params.title);
     }
+	if (params.startDate) {
+		var sD = new Date(params.startDate);
+		//initialSearchParams.startDate = params.startDate;
+		//setStartDate(params.startDate);
+		initialSearchParams.startDate = sD.getFullYear()+'-'+((sD.getMonth() + 1) < 10 ? '0'+(sD.getMonth() + 1) : sD.getMonth() + 1)+'-'+(sD.getDate() < 10 ? '0'+sD.getDate() : sD.getDate());
+		setStartDate(sD.getFullYear()+'-'+((sD.getMonth() + 1) < 10 ? '0'+(sD.getMonth() + 1) : sD.getMonth() + 1)+'-'+(sD.getDate() < 10 ? '0'+sD.getDate() : sD.getDate()));
+	}
+	if (params.endDate) {
+		//initialSearchParams.endDate = params.endDate;
+		//setEndDate(params.endDate);
+		var eD = new Date(params.endDate);
+		initialSearchParams.endDate = eD.getFullYear()+'-'+((eD.getMonth() + 1) < 10 ? '0'+(eD.getMonth() + 1) : eD.getMonth() + 1)+'-'+(eD.getDate() < 10 ? '0'+eD.getDate() : eD.getDate());
+		setEndDate(eD.getFullYear()+'-'+((eD.getMonth() + 1) < 10 ? '0'+(eD.getMonth() + 1) : eD.getMonth() + 1)+'-'+(eD.getDate() < 10 ? '0'+eD.getDate() : eD.getDate()));
+	}
+
     if (params.start) {
       const startNum = parseInt(params.start);
       initialSearchParams.start = startNum;
@@ -43,21 +62,21 @@ const Search = props => {
   useEffect(() => {
     performSearch();
   }, [searchParams]);
-
+  
   const handleSubmit = e => {
     e.preventDefault();
     if (!keyword) return;
     setStart(0);
-    setSearchParams({ keyword, title, start: 0 });
+    setSearchParams({ keyword, title, startDate, endDate, start: 0 });
   };
 
   const performSearch = () => {
-    const { keyword, title, start } = searchParams;
-    props.history.push(`/?keyword=${keyword}&title=${title}&start=${start}`);
+    const { keyword, title, startDate, endDate, start } = searchParams;
+    props.history.push(`/?keyword=${keyword}&title=${title}&startDate=${startDate}&endDate=${endDate}&start=${start}`);
     if (!keyword) return;
     setLoading(true);
     axios
-      .get(config.api.url, { params: { keyword, title, start } })
+      .get(config.api.url, { params: { keyword, title, startDate, endDate, start } })
       .then(res => {
         const videos = res.data;
         setResultCount(
@@ -73,7 +92,7 @@ const Search = props => {
     let selected = data.selected;
     let newStart = Math.ceil(selected * config.resultsPerPage);
     setStart(newStart);
-    setSearchParams({ keyword, title, start: newStart });
+    setSearchParams({ keyword, title, startDate, endDate, start: newStart });
   };
 
   const handleKeywordInputChange = e => {
@@ -82,6 +101,14 @@ const Search = props => {
 
   const handleTitleInputChange = e => {
     setTitle(e.target.value);
+  };
+  
+  const handleStartDateInputChange = date => {
+	  setStartDate(date);
+  };
+  
+  const handleEndDateInputChange = date => {
+	  setEndDate(date);
   };
 
   let resultsJsx;
@@ -172,7 +199,7 @@ const Search = props => {
       <section className="search-form">
         <form onSubmit={handleSubmit}>
           <div className="search-wrap">
-            <SearchBox keyword={keyword} title={title} handleKeywordChange={handleKeywordInputChange} handleTitleChange={handleTitleInputChange} />
+            <SearchBox keyword={keyword} title={title} startDate={startDate} endDate={endDate} handleKeywordChange={handleKeywordInputChange} handleTitleChange={handleTitleInputChange} handleStartDateChange={handleStartDateInputChange} handleEndDateChange={handleEndDateInputChange}/>
           </div>
         </form>
       </section>
