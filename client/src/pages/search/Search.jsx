@@ -65,7 +65,6 @@ const Search = props => {
   };
 
   const performSearch = () => {
-	  //console.log(searchParams);
     const { keyword, title, startDate, endDate, start } = searchParams;
     props.history.push(`/?keyword=${keyword}&title=${title}&startDate=${startDate}&endDate=${endDate}&start=${start}`);
     if (!keyword) return;

@@ -1,7 +1,10 @@
 import React from "react";
+import DatePicker from "react-date-picker";
+import "react-date-picker/dist/DatePicker.css";
 import "./SearchBox.scss";
-import DatePicker from "react-date-picker"
-import "react-date-picker/dist/DatePicker.css"
+
+const MIN_DATE = new Date(2008, 1, 1);
+const MAX_DATE = new Date();
 
 const SearchBox = ({ keyword, title, startDate, endDate, handleKeywordChange, handleTitleChange, handleStartDateChange, handleEndDateChange }) => {
   // Add show/hide advanced options functionality when we have more advanced search options
@@ -11,7 +14,7 @@ const SearchBox = ({ keyword, title, startDate, endDate, handleKeywordChange, ha
 
   if (showDate) {
 	  if (startDate) {
-		startDate = new Date(startDate);
+		  startDate = new Date(startDate);
 	  }
 	  if (endDate) {
 		  endDate = new Date(endDate);
@@ -20,7 +23,7 @@ const SearchBox = ({ keyword, title, startDate, endDate, handleKeywordChange, ha
   return (
     <div className="search-box">
       <div className="main-search-wrap">
-        <div className="main-search">
+        <div className="main-search search-section">
           <label htmlFor="search">
             <span>Keyword (required)</span>
             <div className="keyword-control-wrap">
@@ -36,7 +39,7 @@ const SearchBox = ({ keyword, title, startDate, endDate, handleKeywordChange, ha
           </label>
         </div>
       </div>
-      <div className="advanced-search">
+      <div className="advanced-search search-section">
         {/* <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="advanced-search-button">Advanced search <i className={`fas fa-caret-${showAdvanced ? 'up' : 'down'}`}></i></button> */}
         { showAdvanced ? 
         <div className="title-wrap">
@@ -54,26 +57,32 @@ const SearchBox = ({ keyword, title, startDate, endDate, handleKeywordChange, ha
        : null }
       </div>	 
 	{showDate ?
-	<div className="date-search-box">
-		<div className="title-wrap">
+	<div className="date-search search-section">
+		<div className="date-wrap">
 		  <label htmlFor="startDate">
 			<span>Start Date (optional)</span><br/>
 			<DatePicker
 				id="startDate"
 				value={startDate}
 				onChange={handleStartDateChange}
-				dateFormat="yyyy-MM-dd"
+				format="y-M-d"
+        minDetail="decade"
+        minDate={MIN_DATE}
+        maxDate={MAX_DATE}
 			/>
 		  </label>
 		</div>
-		<div className="title-wrap">
+		<div className="date-wrap">
 		  <label htmlFor="endDate">
 			<span>End Date (optional)</span><br/>
 			<DatePicker
 				id="endDate"
 				value={endDate}
 				onChange={handleEndDateChange}
-				dateFormat="yyyy-MM-dd"
+				format="y-M-d"
+        minDetail="decade"
+        minDate={MIN_DATE}
+        maxDate={MAX_DATE}
 			/>
 		  </label>
 		</div>

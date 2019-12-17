@@ -12,6 +12,9 @@ button {
 }
 
 .search-box {
+  .search-section:not(:first-child) {
+    margin-top: 10px;
+  }
   .main-search-wrap {
     display:flex;
     flex-direction: column;
@@ -25,6 +28,9 @@ button {
       width: 5em;
       border-radius:  0 4px 4px 0;
     }
+    & > input {
+      border-radius:  4px 0 0 4px;
+    }
   }
   .main-search {
     margin-top:2px;
@@ -37,22 +43,20 @@ button {
     width: 100%;
     input {
       width: 100%;
-      border-radius: 4px 0 0 4px;
+      border-radius: 4px;
     }
     margin-bottom:20px;
   }
 }
 .advanced-search {
-  text-align: left;
-  margin-top:10px;
-  display:table;
-  width:100%;
+    display:flex;
+    flex-direction: column;
+    text-align: left;
 }
-.date-search-box {
-	text-align:left;
-	width:50%;
-	display:table;
-	margin:auto;
+.date-search {
+    display:flex;
+    flex-direction: row;
+    text-align: left;
 }
 .advanced-search-button {
   background:none;
@@ -68,8 +72,31 @@ button {
 }
 .react-date-picker {
 	background-color:white;
+  border-radius: 4px;
+  font-size: 18px;
+  .react-date-picker__wrapper {
+    padding-left: 0.5em;
+    border-radius: 4px;
+  }
 }
-.title-wrap {
-	display:table-cell;
-	padding: 0 15px 0 15px
+.react-calendar {
+  color: black;
+  border-radius: 4px;
+  padding: 10px;
+  font-family: inherit;
+  button {
+    font-size: 16px;
+  }
+}
+.react-calendar__tile {
+ padding: 0; 
+}
+
+.react-calendar__year-view .react-calendar__tile, .react-calendar__decade-view .react-calendar__tile, .react-calendar__century-view .react-calendar__tile {
+  padding: 0;
+  height: 3.8em;
+}
+
+.date-wrap:first-child {
+  margin-right: 20px;
 }
