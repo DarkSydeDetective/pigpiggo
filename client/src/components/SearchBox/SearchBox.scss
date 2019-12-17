@@ -45,6 +45,14 @@ button {
 .advanced-search {
   text-align: left;
   margin-top:10px;
+  display:table;
+  width:100%;
+}
+.date-search-box {
+	text-align:left;
+	width:50%;
+	display:table;
+	margin:auto;
 }
 .advanced-search-button {
   background:none;
@@ -54,4 +62,14 @@ button {
   box-shadow: none;
   cursor: pointer;
   font-size:16px;
+}
+.react-date-picker__inputGroup__divider {
+	color:black;
+}
+.react-date-picker {
+	background-color:white;
+}
+.title-wrap {
+	display:table-cell;
+	padding: 0 15px 0 15px
 }
