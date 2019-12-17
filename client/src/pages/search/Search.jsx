@@ -8,6 +8,13 @@ import qs from "query-string";
 import { withRouter } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 
+const dateToYYYYMMDD = date => {
+  if (!date) {
+    return '';
+  }
+  return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+}
+
 const Search = props => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,7 +33,6 @@ const Search = props => {
       ignoreQueryPrefix: false
     });
     const initialSearchParams = { start: 0, keyword: '', startDate: '', endDate: '', title: '' };
-	var regDate = /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/;
 
     if (params.keyword) {
       initialSearchParams.keyword = params.keyword;
@@ -98,11 +104,11 @@ const Search = props => {
   };
   
   const handleStartDateInputChange = date => {
-	  setStartDate(date ? date : '');
+	  setStartDate(dateToYYYYMMDD(date));
   };
   
   const handleEndDateInputChange = date => {
-	  setEndDate(date ? date : '');
+	  setEndDate(dateToYYYYMMDD(date));
   };
 
   let resultsJsx;
