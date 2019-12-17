@@ -98,11 +98,11 @@ const Search = props => {
   };
   
   const handleStartDateInputChange = date => {
-	  setStartDate(date);
+	  setStartDate(date ? date : '');
   };
   
   const handleEndDateInputChange = date => {
-	  setEndDate(date);
+	  setEndDate(date ? date : '');
   };
 
   let resultsJsx;
