@@ -65,7 +65,8 @@ Finally, run ./update.sh to process and update the db. (you can just Ctrl+C a co
 
 ## Contributing
 
-TODO
+Fork the project and create a new branch to work on.  
+When done, create a pull request.
 
 ## Authors
 
