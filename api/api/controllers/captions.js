@@ -21,11 +21,11 @@ const getCaptions = function(req, res) {
     params.push("%" + title + "%");
   }
   if (startDate && startDate.match(regDate)) {
-	  startDateField = `${paramCount > 0 ? 'AND' : 'WHERE'} video.uploaded > $${++paramCount}`;
+	  startDateField = `${paramCount > 0 ? 'AND' : 'WHERE'} video.uploaded >= $${++paramCount}`;
 	  params.push(startDate);
   }
   if (endDate && endDate.match(regDate)) {
-	  endDateField = `${paramCount > 0 ? 'AND' : 'WHERE'} video.uploaded < $${++paramCount}`;
+	  endDateField = `${paramCount > 0 ? 'AND' : 'WHERE'} video.uploaded <= $${++paramCount}`;
 	  params.push(endDate);
   }
 
@@ -39,7 +39,7 @@ const getCaptions = function(req, res) {
 					${endDateField}
                 ORDER BY video.uploaded DESC
 	    	        LIMIT 50 OFFSET ${start}
-    ;`,
+	;`,
     params,
     (err, data) => {
       if (err) {
