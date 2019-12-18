@@ -22,7 +22,7 @@ SET row_security = off;
 -- Name: pigpiggo; Type: DATABASE; Schema: -; Owner: postgres
 --
 
-CREATE DATABASE pigpiggo WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.utf-8' LC_CTYPE = 'en_US.utf-8';
+CREATE DATABASE pigpiggo WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'C.UTF-8' LC_CTYPE = 'C.UTF-8';
 
 
 ALTER DATABASE pigpiggo OWNER TO postgres;
