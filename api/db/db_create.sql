@@ -50,6 +50,20 @@ CREATE SCHEMA video;
 
 ALTER SCHEMA video OWNER TO postgres;
 
+--
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -131,7 +145,21 @@ ALTER TABLE ONLY public.video
     ADD CONSTRAINT video_pkey PRIMARY KEY (id);
 
 
+--
+-- Name: text_index; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX text_index ON public.caption USING gin (text public.gin_trgm_ops);
+
+
+--
+-- Name: caption video_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.caption
+    ADD CONSTRAINT video_fkey FOREIGN KEY (video_id) REFERENCES public.video(id);
 -- Completed on 2019-10-13 09:20:38
+
 
 --
 -- PostgreSQL database dump complete
