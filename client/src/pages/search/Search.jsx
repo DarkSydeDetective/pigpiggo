@@ -7,13 +7,17 @@ import config from "../../config";
 import qs from "query-string";
 import { withRouter } from "react-router-dom";
 import ReactPaginate from "react-paginate";
-
+const pad = (n, width, z) => {
+	 z = z || '0';
+   n = n + '';
+	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}    
 const dateToYYYYMMDD = date => {
-  if (!date) {
+	if (!date) {
     return '';
   }
-  return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
-}
+	return `${date.getFullYear()}-${pad(date.getMonth()+1, 2)}-${pad(date.getDate(), 2)}`;
+}        
 
 const Search = props => {
   const [hasSearched, setHasSearched] = useState(false);
