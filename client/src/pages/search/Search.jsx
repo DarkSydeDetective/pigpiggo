@@ -11,15 +11,11 @@ import {
   LineChart,
   Line,
   CartesianGrid,
+  ResponsiveContainer,
   XAxis,
   YAxis,
   Tooltip,
 } from 'recharts';
-const data = [
-  { name: '2020/5/3', Count: 25 },
-  { name: '2020/5/4', Count: 32 },
-  { name: '2020/5/5', Count: 35 },
-];
 const pad = (n, width, z) => {
   z = z || '0';
   n = n + '';
@@ -37,7 +33,8 @@ const dateToYYYYMMDD = (date) => {
 
 const Search = (props) => {
   const [hasSearched, setHasSearched] = useState(false);
-  const [activeTab, setActiveTab] = useState('results');
+  const [hasTrended, setHasTrended] = useState(false);
+  const [activeTab, setActiveTab] = useState('search');
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useState({
     start: 0,
@@ -52,6 +49,7 @@ const Search = (props) => {
   const [endDate, setEndDate] = useState('');
   const [title, setTitle] = useState('');
   const [results, setResults] = useState([]);
+  const [trendData, setTrendData] = useState([]);
   const [resultCount, setResultCount] = useState(0);
 
   // set initial state on startup
@@ -95,17 +93,28 @@ const Search = (props) => {
   }, []);
 
   useEffect(() => {
-    performSearch();
+    if (activeTab === 'search') performSearch();
+    else performTrend();
   }, [searchParams]);
 
   useEffect(() => {
     updateHistory();
+    if (activeTab === 'search' && !hasSearched) {
+      performSearch();
+    }
+    if (activeTab === 'trend' && !hasTrended) {
+      performTrend();
+    }
   }, [activeTab]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!keyword) return;
     setStart(0);
+    setResults([]);
+    setTrendData([]);
+    setHasSearched(false);
+    setHasTrended(false);
     setSearchParams({ keyword, title, startDate, endDate, start: 0 });
   };
 
@@ -135,6 +144,26 @@ const Search = (props) => {
       });
   };
 
+  const performTrend = () => {
+    const { keyword, title, startDate, endDate } = searchParams;
+    updateHistory();
+    if (!keyword) return;
+    setLoading(true);
+    axios
+      .get(config.api.url + '/trend', {
+        params: { keyword, title, startDate, endDate },
+      })
+      .then((res) => {
+        const data = res.data;
+        setResultCount(
+          res.data && res.data.length > 0 ? res.data[0].full_count : 0
+        );
+        setLoading(false);
+        setHasTrended(true);
+        setTrendData(data);
+      });
+  };
+
   const handlePageClick = (data) => {
     let selected = data.selected;
     let newStart = Math.ceil(selected * config.resultsPerPage);
@@ -158,19 +187,37 @@ const Search = (props) => {
     setEndDate(dateToYYYYMMDD(date));
   };
 
-  const renderLineChart = (
-    <LineChart
-      width={600}
-      height={300}
-      data={data}
-      margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-      <Line type="linear" dataKey="Count" stroke="#8884d8" />
-      <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-      <XAxis dataKey="name" />
-      <YAxis />
-      <Tooltip contentStyle={{ color: '#333' }} />
-    </LineChart>
-  );
+  let trendJsx;
+  if (loading) {
+    trendJsx = (
+      <div className="loading">
+        <i className="fas fa-spinner fa-spin"></i> MASSIVE delay, this site
+        SUCKS dood
+      </div>
+    );
+  } else if (trendData && trendData.length > 0) {
+    trendJsx = (
+      <ResponsiveContainer height={600} width="100%">
+        <LineChart
+          data={trendData}
+          margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+          <Line type="linear" dataKey="count" stroke="#8884d8" />
+          <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+          <XAxis stroke="#ccc" dataKey="month" />
+          <YAxis stroke="#ccc" domain={[0, 'dataMax']} /> />
+          <Tooltip contentStyle={{ color: '#333' }} />
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  } else if (hasTrended) {
+    trendJsx = (
+      <div className="search-results">
+        Wuuhhttt?? No results? Stoopid algorithm
+      </div>
+    );
+  } else {
+    trendJsx = null;
+  }
 
   let resultsJsx;
   if (loading) {
@@ -273,23 +320,25 @@ const Search = (props) => {
           </div>
         </form>
       </section>
-      <section className="results">
-        <ul className="result-tabs clearfix">
-          <li className={activeTab === 'results' ? 'active' : ''}>
-            <button onClick={() => setActiveTab('results')}>
-              <i className="fas fa-search"></i> Results
-            </button>
-          </li>
-          <li className={activeTab === 'trend' ? 'active' : ''}>
-            <button onClick={() => setActiveTab('trend')}>
-              <i className="fas fa-chart-line"></i> Trend
-            </button>
-          </li>
-        </ul>
-        {activeTab === 'results' && resultsJsx}
-        {activeTab === 'trend' && renderLineChart}
-      </section>
-      {activeTab === 'results' &&
+      {(hasSearched || hasTrended) && (
+        <section className="results">
+          <ul className="result-tabs clearfix">
+            <li className={activeTab === 'search' ? 'active' : ''}>
+              <button onClick={() => setActiveTab('search')}>
+                <i className="fas fa-search"></i> Results
+              </button>
+            </li>
+            <li className={activeTab === 'trend' ? 'active' : ''}>
+              <button onClick={() => setActiveTab('trend')}>
+                <i className="fas fa-chart-line"></i> Trend (beta)
+              </button>
+            </li>
+          </ul>
+          {activeTab === 'search' && resultsJsx}
+          {activeTab === 'trend' && trendJsx}
+        </section>
+      )}
+      {activeTab === 'search' &&
       resultCount &&
       resultCount > config.resultsPerPage &&
       !loading ? (
