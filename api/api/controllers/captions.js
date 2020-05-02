@@ -122,7 +122,8 @@ const getTrend = function (req, res) {
       ${titleField}
       ${startDateField}
       ${endDateField}
-      GROUP BY date_trunc('month', video.uploaded);
+      GROUP BY date_trunc('month', video.uploaded)
+      ORDER BY date_trunc('month', video.uploaded);
     ;`,
     params,
     (err, data) => {
