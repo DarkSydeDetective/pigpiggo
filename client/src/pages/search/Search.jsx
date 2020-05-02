@@ -320,8 +320,8 @@ const Search = (props) => {
           </div>
         </form>
       </section>
-      {(hasSearched || hasTrended) && (
-        <section className="results">
+      <section className="results">
+        {(hasSearched || hasTrended) && (
           <ul className="result-tabs clearfix">
             <li className={activeTab === 'search' ? 'active' : ''}>
               <button onClick={() => setActiveTab('search')}>
@@ -334,10 +334,10 @@ const Search = (props) => {
               </button>
             </li>
           </ul>
-          {activeTab === 'search' && resultsJsx}
-          {activeTab === 'trend' && trendJsx}
-        </section>
-      )}
+        )}
+        {activeTab === 'search' && resultsJsx}
+        {activeTab === 'trend' && trendJsx}
+      </section>
       {activeTab === 'search' &&
       resultCount &&
       resultCount > config.resultsPerPage &&
