@@ -1,6 +1,6 @@
-const db = require("../db");
+const db = require('../db');
 
-const getCaptions = function(req, res) {
+const getSearchResults = function (req, res) {
   var regDate = /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/;
   const keyword = req.query.keyword;
   const title = req.query.title;
@@ -11,22 +11,32 @@ const getCaptions = function(req, res) {
     start = 0;
   }
   const params = [];
-  let paramCount = 0, keywordField = '', titleField = '', startDateField = '', endDateField = '';
+  let paramCount = 0,
+    keywordField = '',
+    titleField = '',
+    startDateField = '',
+    endDateField = '';
   if (keyword && keyword.length > 0) {
     keywordField = `WHERE caption.text ILIKE $${++paramCount}`;
-    params.push("%" + keyword + "%");
+    params.push('%' + keyword + '%');
   }
   if (title && title.length > 0) {
-    titleField = `${paramCount > 0 ? 'AND' : 'WHERE'} video.title ILIKE $${++paramCount}`;
-    params.push("%" + title + "%");
+    titleField = `${
+      paramCount > 0 ? 'AND' : 'WHERE'
+    } video.title ILIKE $${++paramCount}`;
+    params.push('%' + title + '%');
   }
   if (startDate && startDate.match(regDate)) {
-	  startDateField = `${paramCount > 0 ? 'AND' : 'WHERE'} video.uploaded >= $${++paramCount}`;
-	  params.push(startDate);
+    startDateField = `${
+      paramCount > 0 ? 'AND' : 'WHERE'
+    } video.uploaded >= $${++paramCount}`;
+    params.push(startDate);
   }
   if (endDate && endDate.match(regDate)) {
-	  endDateField = `${paramCount > 0 ? 'AND' : 'WHERE'} video.uploaded <= $${++paramCount}`;
-	  params.push(endDate);
+    endDateField = `${
+      paramCount > 0 ? 'AND' : 'WHERE'
+    } video.uploaded <= $${++paramCount}`;
+    params.push(endDate);
   }
 
   db.pool.query(
@@ -65,4 +75,6 @@ const getCaptions = function(req, res) {
     }
   );
 };
-exports.getCaptions = getCaptions;
+const getTrend = function (req, res) {};
+exports.getSearchResults = getSearchResults;
+exports.getTrend = getTrend;

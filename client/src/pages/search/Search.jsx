@@ -121,7 +121,7 @@ const Search = (props) => {
     if (!keyword) return;
     setLoading(true);
     axios
-      .get(config.api.url, {
+      .get(config.api.url + '/search', {
         params: { keyword, title, startDate, endDate, start },
       })
       .then((res) => {
