@@ -187,6 +187,11 @@ const Search = (props) => {
     setEndDate(dateToYYYYMMDD(date));
   };
 
+  const handleTrendClick = (params) => {
+    if (params) {
+    }
+  };
+
   let trendJsx;
   if (loading) {
     trendJsx = (
@@ -199,6 +204,7 @@ const Search = (props) => {
     trendJsx = (
       <ResponsiveContainer height={600} width="100%">
         <LineChart
+          onClick={handleTrendClick}
           data={trendData}
           margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
           <Line type="linear" dataKey="count" stroke="#8884d8" />
@@ -320,7 +326,7 @@ const Search = (props) => {
           </div>
         </form>
       </section>
-      <section className="results">
+      <section className={`${activeTab === 'trend' ? 'trend' : ''} results`}>
         {(hasSearched || hasTrended) && (
           <ul className="result-tabs clearfix">
             <li className={activeTab === 'search' ? 'active' : ''}>

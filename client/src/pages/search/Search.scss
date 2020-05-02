@@ -23,6 +23,9 @@
   margin: 0 auto;
   margin-top: 20px;
   max-width: 720px;
+  &.trend {
+    max-width: 1800px;
+  }
 }
 
 .thumbnail {
@@ -88,7 +91,8 @@
 
 .result-tabs {
   list-style-type: none;
-  margin: 0 0 10px 0;
+  max-width: 720px;
+  margin: 0 auto 10px auto;
   padding: 0;
   li {
     float: left;
