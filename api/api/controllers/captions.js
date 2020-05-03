@@ -1,4 +1,5 @@
 const db = require('../db');
+const moment = require('moment');
 
 const getSearchResults = function (req, res) {
   var regDate = /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/;
@@ -142,14 +143,35 @@ const getTrend = function (req, res) {
         }
       }
 */
-        data.rows.forEach((item) => {
-          const date = new Date(item.month);
-          item.month = `${date.toLocaleString('default', {
-            month: 'short',
-          })} ${date.getFullYear()}`;
-          item.count = parseInt(item.count, 10);
-        });
-        res.json(data.rows);
+        if (data.rows && data.rows.length > 0) {
+          const trendData = [];
+          const current = moment(data.rows[0].month);
+          const next = current.clone().add(1, 'month');
+          data.rows.forEach((item) => {
+            const tdItemDate = moment(item.month);
+
+            // fill in missing months with a count of 0
+            while (tdItemDate.format('YYYY-MM') > next.format('YYYY-MM')) {
+              trendData.push({
+                count: 0,
+                month: next.format('MMM YYYY'),
+              });
+              next.add(1, 'month');
+            }
+
+            // add this row item
+            trendData.push({
+              count: parseInt(item.count),
+              month: tdItemDate.format('MMM YYYY'),
+            });
+
+            // calculate next expected month
+            next.add(1, 'month');
+          });
+          res.json(trendData);
+        } else {
+          res.json([]);
+        }
       } else {
         res.json(null);
       }
