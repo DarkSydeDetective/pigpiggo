@@ -1,12 +1,14 @@
-.about-tips { 
-    list-style-type: circle;
-    margin-left: 20px;
+.about-tips {
+  list-style-type: circle;
+  margin-left: 20px;
 }
 
 .about {
-    text-align:left;
+  text-align: left;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 h2 {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
