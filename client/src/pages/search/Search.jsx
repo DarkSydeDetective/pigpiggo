@@ -342,7 +342,7 @@ const Search = (props) => {
             </li>
             <li className={activeTab === 'trend' ? 'active' : ''}>
               <button onClick={() => setActiveTab('trend')}>
-                <i className="fas fa-chart-line"></i> Trend (beta)
+                <i className="fas fa-chart-line"></i> Trend
               </button>
             </li>
           </ul>
