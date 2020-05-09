@@ -37,7 +37,7 @@ const getCaptions = function(req, res) {
                     ${titleField}
 					${startDateField}
 					${endDateField}
-                ORDER BY video.uploaded DESC, video.title DESC, caption.time DESC
+                ORDER BY video.uploaded DESC
 	    	        LIMIT 50 OFFSET ${start}
 	;`,
     params,
