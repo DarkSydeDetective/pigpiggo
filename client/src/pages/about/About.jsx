@@ -4,12 +4,13 @@ import './About.scss';
 const About = () => {
   return (
       <div className="about">
-          <h2>Updates</h2>
-          <ul className="about-tips">
-            <li>2019/10/17 Added THEKINGOFHATEVLOGS videos</li>
-          </ul>
           <h2 style={ {marginTop: "20px"} }>Tips</h2>
           <ul className="about-tips">
+            <li>
+               Videos/captions are automatically updated at 10 AM GMT daily from the DSPGaming and King of Hate Vlog channels.
+            </li>
+            <li>A very simple system is used to match words, so for example entering 'vest' will return matches for 'invest', 'vestige' etc. (This applies to counts shown on Trends as well).<br/>
+               To somewhat get around this, you can add blank spaces to the start and end of the word/phrase e.g. ' vest '. Note that this might result in fewer results in reality though if a caption starts or ends with the word/phrase (as there won't be a space before/after it so it won't match). </li>
             <li>The database is built from YouTube's automatically generated captions so there will be mistakes, misspellings etc.
                 Try searching for what you think would be the most common spelling based on the sound of the word. For example
                 you'll get more results for 'Fortnight' than 'Fortnite', 'Derrick' than 'Derrich' etc.. </li>
@@ -19,12 +20,7 @@ const About = () => {
                 Hoping to improve the search so it can handle this in the future but for now if you don't get any results when using multiple words, try reducing the number of words.
             </li>
             <li>
-              Dave being the most prolific content creator of our time has a shit ton of videos, not all of which have been incorporated yet.
-              I hope to have all the videos in there very soon but if what you want isn't coming up it's possible the video containing the part you're looking for just hasn't been added yet.
-              New videos may also take me a day or two to add but hopefully I can automate this in the future.
-            </li>
-            <li>
-              Data is currently only taken from the DSPGaming channel so if it's something unrecorded or on another channel, it won't show up. Again, I hope to add more channels/videos soon.
+              I have tried to add unrecorded videos where possible from sources such as Mr. Huth but these might take a while to be added and I may miss some.
             </li>
           </ul>
           <h2 style={ {marginTop: "20px"} }>Feedback</h2>
