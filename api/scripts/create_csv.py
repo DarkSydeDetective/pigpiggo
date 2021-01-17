@@ -26,7 +26,7 @@ try:
         uploaded = data['upload_date']
         thumbnail = data['thumbnail'].replace('maxresdefault.jpg', 'sddefault.jpg')
         title = data['fulltitle']
-        length = data['duration']
+        length = int(data['duration'])
         info_writer.writerow([id,title,length,thumbnail,uploaded])
       # captions
       
