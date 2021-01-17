@@ -9,10 +9,12 @@ from .theplatform import ThePlatformIE
 from .adobepass import AdobePassIE
 from ..compat import compat_urllib_parse_unquote
 from ..utils import (
+    int_or_none,
+    parse_duration,
     smuggle_url,
     try_get,
+    unified_timestamp,
     update_url_query,
-    int_or_none,
 )
 
 
@@ -84,28 +86,61 @@ class NBCIE(AdobePassIE):
     def _real_extract(self, url):
         permalink, video_id = re.match(self._VALID_URL, url).groups()
         permalink = 'http' + compat_urllib_parse_unquote(permalink)
-        response = self._download_json(
-            'https://api.nbc.com/v3/videos', video_id, query={
-                'filter[permalink]': permalink,
-                'fields[videos]': 'description,entitlement,episodeNumber,guid,keywords,seasonNumber,title,vChipRating',
-                'fields[shows]': 'shortTitle',
-                'include': 'show.shortTitle',
-            })
-        video_data = response['data'][0]['attributes']
+        video_data = self._download_json(
+            'https://friendship.nbc.co/v2/graphql', video_id, query={
+                'query': '''query bonanzaPage(
+  $app: NBCUBrands! = nbc
+  $name: String!
+  $oneApp: Boolean
+  $platform: SupportedPlatforms! = web
+  $type: EntityPageType! = VIDEO
+  $userId: String!
+) {
+  bonanzaPage(
+    app: $app
+    name: $name
+    oneApp: $oneApp
+    platform: $platform
+    type: $type
+    userId: $userId
+  ) {
+    metadata {
+      ... on VideoPageData {
+        description
+        episodeNumber
+        keywords
+        locked
+        mpxAccountId
+        mpxGuid
+        rating
+        resourceId
+        seasonNumber
+        secondaryTitle
+        seriesShortTitle
+      }
+    }
+  }
+}''',
+                'variables': json.dumps({
+                    'name': permalink,
+                    'oneApp': True,
+                    'userId': '0',
+                }),
+            })['data']['bonanzaPage']['metadata']
         query = {
             'mbr': 'true',
             'manifest': 'm3u',
         }
-        video_id = video_data['guid']
-        title = video_data['title']
-        if video_data.get('entitlement') == 'auth':
+        video_id = video_data['mpxGuid']
+        title = video_data['secondaryTitle']
+        if video_data.get('locked'):
             resource = self._get_mvpd_resource(
-                'nbcentertainment', title, video_id,
-                video_data.get('vChipRating'))
+                video_data.get('resourceId') or 'nbcentertainment',
+                title, video_id, video_data.get('rating'))
             query['auth'] = self._extract_mvpd_auth(
                 url, video_id, 'nbcentertainment', resource)
         theplatform_url = smuggle_url(update_url_query(
-            'http://link.theplatform.com/s/NnzsPC/media/guid/2410887629/' + video_id,
+            'http://link.theplatform.com/s/NnzsPC/media/guid/%s/%s' % (video_data.get('mpxAccountId') or '2410887629', video_id),
             query), {'force_smil_url': True})
         return {
             '_type': 'url_transparent',
@@ -117,13 +152,14 @@ class NBCIE(AdobePassIE):
             'season_number': int_or_none(video_data.get('seasonNumber')),
             'episode_number': int_or_none(video_data.get('episodeNumber')),
             'episode': title,
-            'series': try_get(response, lambda x: x['included'][0]['attributes']['shortTitle']),
+            'series': video_data.get('seriesShortTitle'),
             'ie_key': 'ThePlatform',
         }
 
 
 class NBCSportsVPlayerIE(InfoExtractor):
-    _VALID_URL = r'https?://vplayer\.nbcsports\.com/(?:[^/]+/)+(?P<id>[0-9a-zA-Z_]+)'
+    _VALID_URL_BASE = r'https?://(?:vplayer\.nbcsports\.com|(?:www\.)?nbcsports\.com/vplayer)/'
+    _VALID_URL = _VALID_URL_BASE + r'(?:[^/]+/)+(?P<id>[0-9a-zA-Z_]+)'
 
     _TESTS = [{
         'url': 'https://vplayer.nbcsports.com/p/BxmELC/nbcsports_embed/select/9CsDKds0kvHI',
@@ -139,12 +175,15 @@ class NBCSportsVPlayerIE(InfoExtractor):
     }, {
         'url': 'https://vplayer.nbcsports.com/p/BxmELC/nbcsports_embed/select/media/_hqLjQ95yx8Z',
         'only_matching': True,
+    }, {
+        'url': 'https://www.nbcsports.com/vplayer/p/BxmELC/nbcsports/select/PHJSaFWbrTY9?form=html&autoPlay=true',
+        'only_matching': True,
     }]
 
     @staticmethod
     def _extract_url(webpage):
         iframe_m = re.search(
-            r'<iframe[^>]+src="(?P<url>https?://vplayer\.nbcsports\.com/[^"]+)"', webpage)
+            r'<(?:iframe[^>]+|div[^>]+data-(?:mpx-)?)src="(?P<url>%s[^"]+)"' % NBCSportsVPlayerIE._VALID_URL_BASE, webpage)
         if iframe_m:
             return iframe_m.group('url')
 
@@ -157,21 +196,29 @@ class NBCSportsVPlayerIE(InfoExtractor):
 
 
 class NBCSportsIE(InfoExtractor):
-    # Does not include https because its certificate is invalid
-    _VALID_URL = r'https?://(?:www\.)?nbcsports\.com//?(?:[^/]+/)+(?P<id>[0-9a-z-]+)'
+    _VALID_URL = r'https?://(?:www\.)?nbcsports\.com//?(?!vplayer/)(?:[^/]+/)+(?P<id>[0-9a-z-]+)'
 
-    _TEST = {
+    _TESTS = [{
+        # iframe src
         'url': 'http://www.nbcsports.com//college-basketball/ncaab/tom-izzo-michigan-st-has-so-much-respect-duke',
         'info_dict': {
             'id': 'PHJSaFWbrTY9',
-            'ext': 'flv',
+            'ext': 'mp4',
             'title': 'Tom Izzo, Michigan St. has \'so much respect\' for Duke',
             'description': 'md5:ecb459c9d59e0766ac9c7d5d0eda8113',
             'uploader': 'NBCU-SPORTS',
             'upload_date': '20150330',
             'timestamp': 1427726529,
         }
-    }
+    }, {
+        # data-mpx-src
+        'url': 'https://www.nbcsports.com/philadelphia/philadelphia-phillies/bruce-bochy-hector-neris-hes-idiot',
+        'only_matching': True,
+    }, {
+        # data-src
+        'url': 'https://www.nbcsports.com/boston/video/report-card-pats-secondary-no-match-josh-allen',
+        'only_matching': True,
+    }]
 
     def _real_extract(self, url):
         video_id = self._match_id(url)
@@ -239,46 +286,18 @@ class NBCSportsStreamIE(AdobePassIE):
         }
 
 
-class CSNNEIE(InfoExtractor):
-    _VALID_URL = r'https?://(?:www\.)?csnne\.com/video/(?P<id>[0-9a-z-]+)'
-
-    _TEST = {
-        'url': 'http://www.csnne.com/video/snc-evening-update-wright-named-red-sox-no-5-starter',
-        'info_dict': {
-            'id': 'yvBLLUgQ8WU0',
-            'ext': 'mp4',
-            'title': 'SNC evening update: Wright named Red Sox\' No. 5 starter.',
-            'description': 'md5:1753cfee40d9352b19b4c9b3e589b9e3',
-            'timestamp': 1459369979,
-            'upload_date': '20160330',
-            'uploader': 'NBCU-SPORTS',
-        }
-    }
-
-    def _real_extract(self, url):
-        display_id = self._match_id(url)
-        webpage = self._download_webpage(url, display_id)
-        return {
-            '_type': 'url_transparent',
-            'ie_key': 'ThePlatform',
-            'url': self._html_search_meta('twitter:player:stream', webpage),
-            'display_id': display_id,
-        }
-
-
 class NBCNewsIE(ThePlatformIE):
     _VALID_URL = r'(?x)https?://(?:www\.)?(?:nbcnews|today|msnbc)\.com/([^/]+/)*(?:.*-)?(?P<id>[^/?]+)'
 
     _TESTS = [
         {
             'url': 'http://www.nbcnews.com/watch/nbcnews-com/how-twitter-reacted-to-the-snowden-interview-269389891880',
-            'md5': 'af1adfa51312291a017720403826bb64',
+            'md5': 'cf4bc9e6ce0130f00f545d80ecedd4bf',
             'info_dict': {
                 'id': '269389891880',
                 'ext': 'mp4',
                 'title': 'How Twitter Reacted To The Snowden Interview',
                 'description': 'md5:65a0bd5d76fe114f3c2727aa3a81fe64',
-                'uploader': 'NBCU-NEWS',
                 'timestamp': 1401363060,
                 'upload_date': '20140529',
             },
@@ -296,28 +315,26 @@ class NBCNewsIE(ThePlatformIE):
         },
         {
             'url': 'http://www.nbcnews.com/nightly-news/video/nightly-news-with-brian-williams-full-broadcast-february-4-394064451844',
-            'md5': '73135a2e0ef819107bbb55a5a9b2a802',
+            'md5': '8eb831eca25bfa7d25ddd83e85946548',
             'info_dict': {
                 'id': '394064451844',
                 'ext': 'mp4',
                 'title': 'Nightly News with Brian Williams Full Broadcast (February 4)',
                 'description': 'md5:1c10c1eccbe84a26e5debb4381e2d3c5',
                 'timestamp': 1423104900,
-                'uploader': 'NBCU-NEWS',
                 'upload_date': '20150205',
             },
         },
         {
             'url': 'http://www.nbcnews.com/business/autos/volkswagen-11-million-vehicles-could-have-suspect-software-emissions-scandal-n431456',
-            'md5': 'a49e173825e5fcd15c13fc297fced39d',
+            'md5': '4a8c4cec9e1ded51060bdda36ff0a5c0',
             'info_dict': {
-                'id': '529953347624',
+                'id': 'n431456',
                 'ext': 'mp4',
-                'title': 'Volkswagen U.S. Chief:\xa0 We Have Totally Screwed Up',
-                'description': 'md5:c8be487b2d80ff0594c005add88d8351',
+                'title': "Volkswagen U.S. Chief:  We 'Totally Screwed Up'",
+                'description': 'md5:d22d1281a24f22ea0880741bb4dd6301',
                 'upload_date': '20150922',
                 'timestamp': 1442917800,
-                'uploader': 'NBCU-NEWS',
             },
         },
         {
@@ -330,7 +347,6 @@ class NBCNewsIE(ThePlatformIE):
                 'description': 'md5:74752b7358afb99939c5f8bb2d1d04b1',
                 'upload_date': '20160420',
                 'timestamp': 1461152093,
-                'uploader': 'NBCU-NEWS',
             },
         },
         {
@@ -344,7 +360,6 @@ class NBCNewsIE(ThePlatformIE):
                 'thumbnail': r're:^https?://.*\.jpg$',
                 'timestamp': 1406937606,
                 'upload_date': '20140802',
-                'uploader': 'NBCU-NEWS',
             },
         },
         {
@@ -360,20 +375,61 @@ class NBCNewsIE(ThePlatformIE):
 
     def _real_extract(self, url):
         video_id = self._match_id(url)
-        if not video_id.isdigit():
-            webpage = self._download_webpage(url, video_id)
+        webpage = self._download_webpage(url, video_id)
 
-            data = self._parse_json(self._search_regex(
-                r'window\.__data\s*=\s*({.+});', webpage,
-                'bootstrap json'), video_id)
-            video_id = data['article']['content'][0]['primaryMedia']['video']['mpxMetadata']['id']
+        data = self._parse_json(self._search_regex(
+            r'<script[^>]+id="__NEXT_DATA__"[^>]*>({.+?})</script>',
+            webpage, 'bootstrap json'), video_id)['props']['initialState']
+        video_data = try_get(data, lambda x: x['video']['current'], dict)
+        if not video_data:
+            video_data = data['article']['content'][0]['primaryMedia']['video']
+        title = video_data['headline']['primary']
+
+        formats = []
+        for va in video_data.get('videoAssets', []):
+            public_url = va.get('publicUrl')
+            if not public_url:
+                continue
+            if '://link.theplatform.com/' in public_url:
+                public_url = update_url_query(public_url, {'format': 'redirect'})
+            format_id = va.get('format')
+            if format_id == 'M3U':
+                formats.extend(self._extract_m3u8_formats(
+                    public_url, video_id, 'mp4', 'm3u8_native',
+                    m3u8_id=format_id, fatal=False))
+                continue
+            tbr = int_or_none(va.get('bitrate'), 1000)
+            if tbr:
+                format_id += '-%d' % tbr
+            formats.append({
+                'format_id': format_id,
+                'url': public_url,
+                'width': int_or_none(va.get('width')),
+                'height': int_or_none(va.get('height')),
+                'tbr': tbr,
+                'ext': 'mp4',
+            })
+        self._sort_formats(formats)
+
+        subtitles = {}
+        closed_captioning = video_data.get('closedCaptioning')
+        if closed_captioning:
+            for cc_url in closed_captioning.values():
+                if not cc_url:
+                    continue
+                subtitles.setdefault('en', []).append({
+                    'url': cc_url,
+                })
 
         return {
-            '_type': 'url_transparent',
             'id': video_id,
-            # http://feed.theplatform.com/f/2E2eJC/nbcnews also works
-            'url': update_url_query('http://feed.theplatform.com/f/2E2eJC/nnd_NBCNews', {'byId': video_id}),
-            'ie_key': 'ThePlatformFeed',
+            'title': title,
+            'description': try_get(video_data, lambda x: x['description']['primary']),
+            'thumbnail': try_get(video_data, lambda x: x['primaryImage']['url']['primary']),
+            'duration': parse_duration(video_data.get('duration')),
+            'timestamp': unified_timestamp(video_data.get('datePublished')),
+            'formats': formats,
+            'subtitles': subtitles,
         }
 
 

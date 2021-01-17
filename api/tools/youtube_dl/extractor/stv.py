@@ -4,36 +4,39 @@ from __future__ import unicode_literals
 import re
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_parse_qs,
-    compat_urllib_parse_urlparse
-)
 from ..utils import (
-    extract_attributes,
+    compat_str,
     float_or_none,
     int_or_none,
+    smuggle_url,
     str_or_none,
+    try_get,
 )
 
 
 class STVPlayerIE(InfoExtractor):
     IE_NAME = 'stv:player'
     _VALID_URL = r'https?://player\.stv\.tv/(?P<type>episode|video)/(?P<id>[a-z0-9]{4})'
-    _TEST = {
-        'url': 'https://player.stv.tv/video/7srz/victoria/interview-with-the-cast-ahead-of-new-victoria/',
-        'md5': '2ad867d4afd641fa14187596e0fbc91b',
+    _TESTS = [{
+        # shortform
+        'url': 'https://player.stv.tv/video/4gwd/emmerdale/60-seconds-on-set-with-laura-norton/',
+        'md5': '5adf9439c31d554f8be0707c7abe7e0a',
         'info_dict': {
-            'id': '6016487034001',
+            'id': '5333973339001',
             'ext': 'mp4',
-            'upload_date': '20190321',
-            'title': 'Interview with the cast ahead of new Victoria',
-            'description': 'Nell Hudson and Lily Travers tell us what to expect in the new season of Victoria.',
-            'timestamp': 1553179628,
+            'upload_date': '20170301',
+            'title': '60 seconds on set with Laura Norton',
+            'description': "How many questions can Laura - a.k.a Kerry Wyatt - answer in 60 seconds? Let\'s find out!",
+            'timestamp': 1488388054,
             'uploader_id': '1486976045',
         },
         'skip': 'this resource is unavailable outside of the UK',
-    }
-    _PUBLISHER_ID = '1486976045'
+    }, {
+        # episodes
+        'url': 'https://player.stv.tv/episode/4125/jennifer-saunders-memory-lane',
+        'only_matching': True,
+    }]
+    BRIGHTCOVE_URL_TEMPLATE = 'http://players.brightcove.net/1486976045/default_default/index.html?videoId=%s'
     _PTYPE_MAP = {
         'episode': 'episodes',
         'video': 'shortform',
@@ -41,54 +44,52 @@ class STVPlayerIE(InfoExtractor):
 
     def _real_extract(self, url):
         ptype, video_id = re.match(self._VALID_URL, url).groups()
-        webpage = self._download_webpage(url, video_id)
 
-        qs = compat_parse_qs(compat_urllib_parse_urlparse(self._search_regex(
-            r'itemprop="embedURL"[^>]+href="([^"]+)',
-            webpage, 'embed URL', default=None)).query)
-        publisher_id = qs.get('publisherID', [None])[0] or self._PUBLISHER_ID
+        webpage = self._download_webpage(url, video_id, fatal=False) or ''
+        props = (self._parse_json(self._search_regex(
+            r'<script[^>]+id="__NEXT_DATA__"[^>]*>({.+?})</script>',
+            webpage, 'next data', default='{}'), video_id,
+            fatal=False) or {}).get('props') or {}
+        player_api_cache = try_get(
+            props, lambda x: x['initialReduxState']['playerApiCache']) or {}
 
-        player_attr = extract_attributes(self._search_regex(
-            r'(<[^>]+class="bcplayer"[^>]+>)', webpage, 'player', default=None)) or {}
+        api_path, resp = None, {}
+        for k, v in player_api_cache.items():
+            if k.startswith('/episodes/') or k.startswith('/shortform/'):
+                api_path, resp = k, v
+                break
+        else:
+            episode_id = str_or_none(try_get(
+                props, lambda x: x['pageProps']['episodeId']))
+            api_path = '/%s/%s' % (self._PTYPE_MAP[ptype], episode_id or video_id)
 
-        info = {}
-        duration = ref_id = series = video_id = None
-        api_ref_id = player_attr.get('data-player-api-refid')
-        if api_ref_id:
+        result = resp.get('results')
+        if not result:
             resp = self._download_json(
-                'https://player.api.stv.tv/v1/%s/%s' % (self._PTYPE_MAP[ptype], api_ref_id),
-                api_ref_id, fatal=False)
-            if resp:
-                result = resp.get('results') or {}
-                video = result.get('video') or {}
-                video_id = str_or_none(video.get('id'))
-                ref_id = video.get('guid')
-                duration = video.get('length')
-                programme = result.get('programme') or {}
-                series = programme.get('name') or programme.get('shortName')
-                subtitles = {}
-                _subtitles = result.get('_subtitles') or {}
-                for ext, sub_url in _subtitles.items():
-                    subtitles.setdefault('en', []).append({
-                        'ext': 'vtt' if ext == 'webvtt' else ext,
-                        'url': sub_url,
-                    })
-                info.update({
-                    'description': result.get('summary'),
-                    'subtitles': subtitles,
-                    'view_count': int_or_none(result.get('views')),
-                })
-        if not video_id:
-            video_id = qs.get('videoId', [None])[0] or self._search_regex(
-                r'<link\s+itemprop="url"\s+href="(\d+)"',
-                webpage, 'video id', default=None) or 'ref:' + (ref_id or player_attr['data-refid'])
+                'https://player.api.stv.tv/v1' + api_path, video_id)
+            result = resp['results']
 
-        info.update({
+        video = result['video']
+        video_id = compat_str(video['id'])
+
+        subtitles = {}
+        _subtitles = result.get('_subtitles') or {}
+        for ext, sub_url in _subtitles.items():
+            subtitles.setdefault('en', []).append({
+                'ext': 'vtt' if ext == 'webvtt' else ext,
+                'url': sub_url,
+            })
+
+        programme = result.get('programme') or {}
+
+        return {
             '_type': 'url_transparent',
-            'duration': float_or_none(duration or player_attr.get('data-duration'), 1000),
             'id': video_id,
+            'url': smuggle_url(self.BRIGHTCOVE_URL_TEMPLATE % video_id, {'geo_countries': ['GB']}),
+            'description': result.get('summary'),
+            'duration': float_or_none(video.get('length'), 1000),
+            'subtitles': subtitles,
+            'view_count': int_or_none(result.get('views')),
+            'series': programme.get('name') or programme.get('shortName'),
             'ie_key': 'BrightcoveNew',
-            'series': series or player_attr.get('data-programme-name'),
-            'url': 'http://players.brightcove.net/%s/default_default/index.html?videoId=%s' % (publisher_id, video_id),
-        })
-        return info
+        }
