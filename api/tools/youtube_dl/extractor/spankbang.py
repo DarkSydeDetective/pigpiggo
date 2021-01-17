@@ -4,19 +4,27 @@ import re
 
 from .common import InfoExtractor
 from ..utils import (
+    determine_ext,
     ExtractorError,
     merge_dicts,
-    orderedSet,
     parse_duration,
     parse_resolution,
     str_to_int,
     url_or_none,
     urlencode_postdata,
+    urljoin,
 )
 
 
 class SpankBangIE(InfoExtractor):
-    _VALID_URL = r'https?://(?:[^/]+\.)?spankbang\.com/(?P<id>[\da-z]+)/(?:video|play|embed)\b'
+    _VALID_URL = r'''(?x)
+                    https?://
+                        (?:[^/]+\.)?spankbang\.com/
+                        (?:
+                            (?P<id>[\da-z]+)/(?:video|play|embed)\b|
+                            [\da-z]+-(?P<id_2>[\da-z]+)/playlist/[^/?#&]+
+                        )
+                    '''
     _TESTS = [{
         'url': 'http://spankbang.com/3vvn/video/fantasy+solo',
         'md5': '1cc433e1d6aa14bc376535b8679302f7',
@@ -56,15 +64,19 @@ class SpankBangIE(InfoExtractor):
     }, {
         'url': 'https://spankbang.com/2y3td/embed/',
         'only_matching': True,
+    }, {
+        'url': 'https://spankbang.com/2v7ik-7ecbgu/playlist/latina+booty',
+        'only_matching': True,
     }]
 
     def _real_extract(self, url):
-        video_id = self._match_id(url)
+        mobj = re.match(self._VALID_URL, url)
+        video_id = mobj.group('id') or mobj.group('id_2')
         webpage = self._download_webpage(
             url.replace('/%s/embed' % video_id, '/%s/video' % video_id),
             video_id, headers={'Cookie': 'country=US'})
 
-        if re.search(r'<[^>]+\bid=["\']video_removed', webpage):
+        if re.search(r'<[^>]+\b(?:id|class)=["\']video_removed', webpage):
             raise ExtractorError(
                 'Video %s is not available' % video_id, expected=True)
 
@@ -75,11 +87,20 @@ class SpankBangIE(InfoExtractor):
             if not f_url:
                 return
             f = parse_resolution(format_id)
-            f.update({
-                'url': f_url,
-                'format_id': format_id,
-            })
-            formats.append(f)
+            ext = determine_ext(f_url)
+            if format_id.startswith('m3u8') or ext == 'm3u8':
+                formats.extend(self._extract_m3u8_formats(
+                    f_url, video_id, 'mp4', entry_protocol='m3u8_native',
+                    m3u8_id='hls', fatal=False))
+            elif format_id.startswith('mpd') or ext == 'mpd':
+                formats.extend(self._extract_mpd_formats(
+                    f_url, video_id, mpd_id='dash', fatal=False))
+            elif ext == 'mp4' or f.get('width') or f.get('height'):
+                f.update({
+                    'url': f_url,
+                    'format_id': format_id,
+                })
+                formats.append(f)
 
         STREAM_URL_PREFIX = 'stream_url_'
 
@@ -93,28 +114,22 @@ class SpankBangIE(InfoExtractor):
                 r'data-streamkey\s*=\s*(["\'])(?P<value>(?:(?!\1).)+)\1',
                 webpage, 'stream key', group='value')
 
-            sb_csrf_session = self._get_cookies(
-                'https://spankbang.com')['sb_csrf_session'].value
-
             stream = self._download_json(
                 'https://spankbang.com/api/videos/stream', video_id,
                 'Downloading stream JSON', data=urlencode_postdata({
                     'id': stream_key,
                     'data': 0,
-                    'sb_csrf_session': sb_csrf_session,
                 }), headers={
                     'Referer': url,
-                    'X-CSRFToken': sb_csrf_session,
+                    'X-Requested-With': 'XMLHttpRequest',
                 })
 
             for format_id, format_url in stream.items():
-                if format_id.startswith(STREAM_URL_PREFIX):
-                    if format_url and isinstance(format_url, list):
-                        format_url = format_url[0]
-                    extract_format(
-                        format_id[len(STREAM_URL_PREFIX):], format_url)
+                if format_url and isinstance(format_url, list):
+                    format_url = format_url[0]
+                extract_format(format_id, format_url)
 
-        self._sort_formats(formats)
+        self._sort_formats(formats, field_preference=('preference', 'height', 'width', 'fps', 'tbr', 'format_id'))
 
         info = self._search_json_ld(webpage, video_id, default={})
 
@@ -151,30 +166,33 @@ class SpankBangIE(InfoExtractor):
 
 
 class SpankBangPlaylistIE(InfoExtractor):
-    _VALID_URL = r'https?://(?:[^/]+\.)?spankbang\.com/(?P<id>[\da-z]+)/playlist/[^/]+'
+    _VALID_URL = r'https?://(?:[^/]+\.)?spankbang\.com/(?P<id>[\da-z]+)/playlist/(?P<display_id>[^/]+)'
     _TEST = {
         'url': 'https://spankbang.com/ug0k/playlist/big+ass+titties',
         'info_dict': {
             'id': 'ug0k',
             'title': 'Big Ass Titties',
         },
-        'playlist_mincount': 50,
+        'playlist_mincount': 40,
     }
 
     def _real_extract(self, url):
-        playlist_id = self._match_id(url)
+        mobj = re.match(self._VALID_URL, url)
+        playlist_id = mobj.group('id')
+        display_id = mobj.group('display_id')
 
         webpage = self._download_webpage(
             url, playlist_id, headers={'Cookie': 'country=US; mobile=on'})
 
         entries = [self.url_result(
-            'https://spankbang.com/%s/video' % video_id,
-            ie=SpankBangIE.ie_key(), video_id=video_id)
-            for video_id in orderedSet(re.findall(
-                r'<a[^>]+\bhref=["\']/?([\da-z]+)/play/', webpage))]
+            urljoin(url, mobj.group('path')),
+            ie=SpankBangIE.ie_key(), video_id=mobj.group('id'))
+            for mobj in re.finditer(
+                r'<a[^>]+\bhref=(["\'])(?P<path>/?[\da-z]+-(?P<id>[\da-z]+)/playlist/%s(?:(?!\1).)*)\1'
+                % re.escape(display_id), webpage)]
 
         title = self._html_search_regex(
-            r'<h1>([^<]+)\s+playlist</h1>', webpage, 'playlist title',
+            r'<h1>([^<]+)\s+playlist\s*<', webpage, 'playlist title',
             fatal=False)
 
         return self.playlist_result(entries, playlist_id, title)
